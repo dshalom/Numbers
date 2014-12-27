@@ -10,7 +10,7 @@ public class RandomNumbers {
 
 	public static ArrayList<Integer> getRandomNumbers(int size) {
 
-		size+=1;
+		size += 1;
 		Random randomGenerator = new Random();
 
 		ArrayList<Integer> randomNumbers = new ArrayList<Integer>(size);
