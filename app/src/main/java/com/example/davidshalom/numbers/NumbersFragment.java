@@ -107,7 +107,7 @@ public class NumbersFragment extends Fragment {
 		mRecyclerView.setAdapter(mAdapter);
 		// 5. set item animator to DefaultAnimator
 	//	mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-		mRecyclerView.setItemAnimator(new SlideInOutLeftItemAnimator(mRecyclerView));
+	//	mRecyclerView.setItemAnimator(new SlideInOutLeftItemAnimator(mRecyclerView));
 
 		return v;
 	}
