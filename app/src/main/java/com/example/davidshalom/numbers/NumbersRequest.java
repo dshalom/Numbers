@@ -19,7 +19,7 @@ public class NumbersRequest {
 
 	public static StringRequest getUserNumberRequest(int number, final NumberRequestListener numberRequestListener, final NumberResponseConverter numberResponseConverter) {
 
-		String urlUserChosen = "https://numbersapi.p.mashape.com/" + number + "/math";
+		String urlUserChosen = "https://numbersapi.p.mashape.com/" + "random" + "/math";
 
 		StringRequest stringRequest = new StringRequest(Request.Method.GET, urlUserChosen,
 				new Response.Listener<String>() {

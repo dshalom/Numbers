@@ -1,5 +1,6 @@
 package com.example.davidshalom.numbers;
 
+import Adapters.MyAdapter;
 import Listeners.NumberRequestListener;
 import Model.NumberResponse;
 import Model.NumberResponseConverter;
@@ -7,11 +8,16 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import com.android.volley.toolbox.StringRequest;
+
+import java.util.ArrayList;
 
 
 /**
@@ -27,10 +33,15 @@ public class NumbersFragment extends Fragment {
 	// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 	private static final String ARG_PARAM1 = "param1";
 	private static final String ARG_PARAM2 = "param2";
+	ArrayList<NumberResponse> data = new ArrayList<>();
 
 	// TODO: Rename and change types of parameters
 	private String mParam1;
 	private String mParam2;
+
+	private RecyclerView mRecyclerView;
+	private RecyclerView.Adapter mAdapter;
+	private RecyclerView.LayoutManager mLayoutManager;
 
 	private OnFragmentInteractionListener mListener;
 
@@ -59,10 +70,12 @@ public class NumbersFragment extends Fragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setRetainInstance(true);
 		if (getArguments() != null) {
 			mParam1 = getArguments().getString(ARG_PARAM1);
 			mParam2 = getArguments().getString(ARG_PARAM2);
 		}
+		data = new ArrayList<>();
 	}
 
 	@Override
@@ -79,6 +92,22 @@ public class NumbersFragment extends Fragment {
 				VolleySingleton.getInstance(getActivity()).addToRequestQueue(request);
 			}
 		});
+
+		mRecyclerView = (RecyclerView) v.findViewById(R.id.my_recycler_view);
+
+		// use a linear layout manager
+
+
+
+		// 2. set layoutManger
+		mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+		// 3. create an adapter
+		mAdapter = new MyAdapter(data);
+		// 4. set adapter
+		mRecyclerView.setAdapter(mAdapter);
+		// 5. set item animator to DefaultAnimator
+	//	mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+		mRecyclerView.setItemAnimator(new SlideInOutLeftItemAnimator(mRecyclerView));
 
 		return v;
 	}
@@ -128,7 +157,8 @@ public class NumbersFragment extends Fragment {
 		@Override
 		public void onResponse(NumberResponse numberResponse) {
 
-			android.util.Log.e("DSDS", numberResponse.getText());
+			data.add(numberResponse);
+			mAdapter.notifyDataSetChanged();
 
 		}
 
