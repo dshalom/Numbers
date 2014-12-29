@@ -6,59 +6,30 @@ import Model.NumberResponse;
 import Model.NumberResponseConverter;
 import android.app.Activity;
 import android.app.Fragment;
-import android.net.Uri;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import com.android.volley.toolbox.StringRequest;
 
 import java.util.ArrayList;
 
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link NumbersFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link NumbersFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class NumbersFragment extends Fragment {
-	// TODO: Rename parameter arguments, choose names that match
-	// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-	private static final String ARG_PARAM1 = "param1";
-	private static final String ARG_PARAM2 = "param2";
+public class NumbersFragment extends Fragment implements UserNumberDialog.UserNumberDialogListener {
+
 	ArrayList<NumberResponse> data = new ArrayList<>();
-
-	// TODO: Rename and change types of parameters
-	private String mParam1;
-	private String mParam2;
-
 	private RecyclerView mRecyclerView;
 	private RecyclerView.Adapter mAdapter;
 	private RecyclerView.LayoutManager mLayoutManager;
 
-	/**
-	 * Use this factory method to create a new instance of
-	 * this fragment using the provided parameters.
-	 *
-	 * @param param1 Parameter 1.
-	 * @param param2 Parameter 2.
-	 * @return A new instance of fragment NumbersFragment.
-	 */
+
 	// TODO: Rename and change types and number of parameters
-	public static NumbersFragment newInstance(String param1, String param2) {
-		NumbersFragment fragment = new NumbersFragment();
-		Bundle args = new Bundle();
-		args.putString(ARG_PARAM1, param1);
-		args.putString(ARG_PARAM2, param2);
-		fragment.setArguments(args);
-		return fragment;
+	public static NumbersFragment newInstance() {
+		return new NumbersFragment();
+
 	}
 
 	public NumbersFragment() {
@@ -69,10 +40,7 @@ public class NumbersFragment extends Fragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setRetainInstance(true);
-		if (getArguments() != null) {
-			mParam1 = getArguments().getString(ARG_PARAM1);
-			mParam2 = getArguments().getString(ARG_PARAM2);
-		}
+
 		data = new ArrayList<>();
 	}
 
@@ -82,20 +50,37 @@ public class NumbersFragment extends Fragment {
 		// Inflate the layout for this fragment
 		View v = inflater.inflate(R.layout.fragment_numbers, container, false);
 
-		Button button = (Button) v.findViewById(R.id.buttonNextRandomNumber);
-		button.setOnClickListener(new View.OnClickListener() {
+		Button buttonRandom = (Button) v.findViewById(R.id.buttonNextRandomNumber);
+		buttonRandom.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				StringRequest request = NumbersRequest.getUserNumberRequest(5, numberRequestListener, new NumberResponseConverter());
-				VolleySingleton.getInstance(getActivity()).addToRequestQueue(request);
+				NumbersRequestFactory.NumberRequest numberRequest = NumbersRequestFactory.getRandomNumberRequest(numberRequestListener, new NumberResponseConverter());
+				VolleySingleton.getInstance(getActivity()).addToRequestQueue(numberRequest);
+			}
+		});
+
+		Button buttonUser = (Button) v.findViewById(R.id.buttonUserNumber);
+		buttonUser.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+
+				FragmentTransaction ft = getFragmentManager().beginTransaction();
+				Fragment prev = getFragmentManager().findFragmentByTag("dialog");
+				if (prev != null) {
+					ft.remove(prev);
+				}
+				ft.addToBackStack(null);
+
+				// Create and show the dialog.
+				UserNumberDialog userNumberDialog = UserNumberDialog.newInstance();
+				userNumberDialog.initialise(NumbersFragment.this);
+				userNumberDialog.show(ft, "dialog");
 			}
 		});
 
 		mRecyclerView = (RecyclerView) v.findViewById(R.id.my_recycler_view);
 
 		// use a linear layout manager
-
-
 
 		// 2. set layoutManger
 		mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -104,8 +89,7 @@ public class NumbersFragment extends Fragment {
 		// 4. set adapter
 		mRecyclerView.setAdapter(mAdapter);
 		// 5. set item animator to DefaultAnimator
-	//	mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-	//	mRecyclerView.setItemAnimator(new SlideInOutLeftItemAnimator(mRecyclerView));
+		//	mRecyclerView.setItemAnimator(new DefaultItemAnimator());
 
 		return v;
 	}
@@ -128,8 +112,17 @@ public class NumbersFragment extends Fragment {
 		@Override
 		public void onResponse(NumberResponse numberResponse) {
 
+			for (NumberResponse response : data) {
+				if (response.getNumber() == numberResponse.getNumber()) {
+					response.setText(numberResponse.getText());
+					mAdapter.notifyDataSetChanged();
+					return;
+				}
+			}
+
 			data.add(numberResponse);
 			mAdapter.notifyDataSetChanged();
+			scrollMyListViewToBottom();
 
 		}
 
@@ -139,4 +132,20 @@ public class NumbersFragment extends Fragment {
 		}
 	};
 
+	@Override
+	public void numberChosen(int number) {
+		NumbersRequestFactory.NumberRequest numberRequest = NumbersRequestFactory.getNumberRequest(number, numberRequestListener, new NumberResponseConverter());
+		VolleySingleton.getInstance(getActivity()).addToRequestQueue(numberRequest);
+	}
+
+	private void scrollMyListViewToBottom() {
+
+		mRecyclerView.post(new Runnable() {
+			@Override
+			public void run() {
+				// Select the last row so it will scroll into view...
+				mRecyclerView.smoothScrollToPosition(mAdapter.getItemCount() - 1);
+			}
+		});
+	}
 }
